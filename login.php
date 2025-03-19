@@ -1,17 +1,31 @@
 <?php
+	ini_set('session.cookie_domain', '.permaviat.ru');
 	session_start();
 	include("./settings/connect_datebase.php");
 	
-	if (isset($_SESSION['user'])) {
-		if($_SESSION['user'] != -1) {
-			
-			$user_query = $mysqli->query("SELECT * FROM `users` WHERE `id` = ".$_SESSION['user']);
-			while($user_read = $user_query->fetch_row()) {
-				if($user_read[3] == 0) header("Location: user.php");
-				else if($user_read[3] == 1) header("Location: admin.php");
+	if (isset($_SESSION['token'])) {
+		$token = $_SESSION['token'];
+		$tokenParts = explode('.', $token);
+		if (count($tokenParts) === 3) {
+			// Декодируем полезную нагрузку (payload)
+			$payloadDecoded = base64_decode($tokenParts[1]);
+			$payload = json_decode($payloadDecoded);
+			if ($payload) {
+				// Извлекаем идентификатор пользователя и роль
+				$userId = $payload->UserId;   // ID пользователя из токена
+				$userRoll = $payload->roll;     // Роль пользователя из токена 
+				
+				// Редирект в зависимости от роли
+				if ($userRoll == 0) {
+					header("Location: user.php");
+					exit;
+				} else if ($userRoll == 1) {
+					header("Location: admin.php");
+					exit;
+				}
 			}
 		}
- 	}
+	}
 ?>
 <html>
 	<head> 
